@@ -1,6 +1,6 @@
 ;; requires s.el to be available and loaded
 (require 's)
-(require 'cl-lib)
+(require 'dash)
 (require 'helm-themes)
 (require 'htmlize)
 
@@ -25,16 +25,13 @@
     (insert contents)
     (write-file filePath)))
 
-(defun sub-lists (list1 list2)
-  "Subtract list2 from list1"
-  (cl-reduce
-   (lambda (acc x) (remove x acc)) list2 :initial-value list1))
-
 (defun sorted-helm-themes ()
   "Sort and remove known bad themes from the lists"
-  (sub-lists
-   (cl-sort (mapcar 'symbol-name (helm-themes--candidates)) 'string-lessp :key 'downcase)
-   bad-themes))
+  (-difference (->> (helm-themes--candidates)
+                    (-map 'symbol-name)
+                    (-map 'downcase)
+                    (-sort 'string-lessp))
+               bad-themes))
 
 (defun mark-and-htmlize-buffer ()
   "Mark the entire current buffer and htmlize it"
@@ -59,7 +56,7 @@
 
 (defun generate-and-join-all-theme-divs (tpl themes)
   "Generate the divs containing the themed content that is embedded inside of the index.html layout"
-  (s-join "" (mapcar (lambda (theme) (generate-theme-div tpl theme)) themes)))
+  (s-join "" (--map (generate-theme-div tpl it) themes)))
 
 (defun generate-theme-gallery ()
   "Generate all of the html needed for the theme gallery and place it's contents in a buffer called theme-gallery"
